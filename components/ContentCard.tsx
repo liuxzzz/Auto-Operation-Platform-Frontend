@@ -1,4 +1,4 @@
-import { Heart, Bookmark } from "lucide-react";
+import { Bookmark, Heart } from "lucide-react";
 import React from "react";
 
 import { ContentCardProps } from "@/types/content";
@@ -8,6 +8,7 @@ export default function ContentCard({
   content,
   onLike,
   onCollect,
+  onCardClick,
   isLiked = false,
   isCollected = false,
 }: ContentCardProps) {
@@ -33,11 +34,45 @@ export default function ContentCard({
     ); // 限制长度
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // 阻止事件冒泡，避免触发按钮点击
+    e.stopPropagation();
+
+    if (onCardClick) {
+      onCardClick(content.note_url);
+    } else {
+      // 默认行为：在新标签页中打开小红书链接
+      window.open(content.note_url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (onCardClick) {
+        onCardClick(content.note_url);
+      } else {
+        // 默认行为：在新标签页中打开小红书链接
+        window.open(content.note_url, "_blank", "noopener,noreferrer");
+      }
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative group cursor-pointer">
+    <div
+      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative group cursor-pointer"
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-label={`查看 ${content.title} 的详情`}
+    >
       {/* 收藏按钮 - 右上角 */}
       <button
-        onClick={onCollect}
+        onClick={e => {
+          e.stopPropagation();
+          onCollect?.();
+        }}
         className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200 cursor-pointer"
       >
         <Bookmark
@@ -92,7 +127,10 @@ export default function ContentCard({
 
           {/* 点赞信息 */}
           <button
-            onClick={onLike}
+            onClick={e => {
+              e.stopPropagation();
+              onLike?.();
+            }}
             className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors duration-200 flex-shrink-0"
           >
             <Heart

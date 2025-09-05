@@ -26,6 +26,7 @@ export interface ContentCardProps {
   content: ContentItem;
   onLike?: () => void;
   onCollect?: () => void;
+  onCardClick?: (noteUrl: string) => void;
   isLiked?: boolean;
   isCollected?: boolean;
 }
