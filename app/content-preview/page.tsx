@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ContentCard from "@/components/ContentCard";
 import { ContentItem } from "@/types/content";
+import { Loading } from "@/components/ui/loading";
 
 export default function ContentPreview() {
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
@@ -97,14 +98,7 @@ export default function ContentPreview() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">加载中...</p>
-        </div>
-      </div>
-    );
+    return <Loading message="正在加载内容..." />;
   }
 
   if (error) {
@@ -119,7 +113,7 @@ export default function ContentPreview() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ">
       {/* 头部 */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

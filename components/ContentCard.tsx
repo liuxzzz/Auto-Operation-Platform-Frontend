@@ -33,11 +33,11 @@ export default function ContentCard({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative group">
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative group cursor-pointer">
       {/* 收藏按钮 - 右上角 */}
       <button
         onClick={onCollect}
-        className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200"
+        className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200 cursor-pointer"
       >
         <Bookmark
           size={16}
