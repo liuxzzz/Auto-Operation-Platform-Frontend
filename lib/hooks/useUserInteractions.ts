@@ -6,9 +6,12 @@ export function useUserInteractions(userId: string = "default_user") {
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
   const [collectedItems, setCollectedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // 加载用户交互数据
   const loadUserInteractions = useCallback(async () => {
+    if (initialized) return; // 防止重复加载
+
     try {
       setLoading(true);
 
@@ -19,12 +22,13 @@ export function useUserInteractions(userId: string = "default_user") {
 
       setLikedItems(new Set(likes));
       setCollectedItems(new Set(collections));
+      setInitialized(true);
     } catch (error) {
       console.error("Error loading user interactions:", error);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, initialized]);
 
   // 处理点赞
   const handleLike = useCallback(
@@ -110,10 +114,11 @@ export function useUserInteractions(userId: string = "default_user") {
     [collectedItems]
   );
 
-  // 初始化加载
+  // 初始化加载 - 只在组件挂载时执行一次
   useEffect(() => {
     loadUserInteractions();
-  }, [loadUserInteractions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     likedItems,

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { prisma } from "@/lib/prisma";
 import { ContentItem } from "@/types/content";
-
-// 模拟数据存储（实际项目中应该使用数据库）
-const contentData: ContentItem[] = [];
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,29 +10,59 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    // 模拟从数据库获取数据
-    let filteredData = contentData;
+    const where =
+      category && category !== "全部" ? { sourceKeyword: category } : {};
 
-    // 按分类筛选
-    if (category && category !== "全部") {
-      filteredData = contentData.filter(
-        item => item.source_keyword === category
-      );
-    }
+    // 获取总数
+    const total = await prisma.contentItem.count({ where });
 
-    // 分页
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedData = filteredData.slice(startIndex, endIndex);
+    // 获取分页数据
+    const content = await prisma.contentItem.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        likes: true,
+        collections: true,
+      },
+    });
+
+    // 转换为前端期望的格式
+    const formattedData: ContentItem[] = content.map(item => ({
+      note_id: item.noteId,
+      type: item.type,
+      title: item.title,
+      desc: item.desc,
+      video_url: item.videoUrl || undefined,
+      time: Number(item.time),
+      last_update_time: Number(item.lastUpdateTime),
+      user_id: item.userId,
+      nickname: item.nickname,
+      avatar: item.avatar,
+      liked_count: item.likedCount,
+      collected_count: item.collectedCount,
+      comment_count: item.commentCount,
+      share_count: item.shareCount,
+      ip_location: item.ipLocation,
+      image_list: item.imageList,
+      tag_list: item.tagList,
+      last_modify_ts: Number(item.lastModifyTs),
+      note_url: item.noteUrl,
+      source_keyword: item.sourceKeyword,
+      xsec_token: item.xsecToken,
+    }));
 
     return NextResponse.json({
       success: true,
-      data: paginatedData,
+      data: formattedData,
       pagination: {
         page,
         limit,
-        total: filteredData.length,
-        totalPages: Math.ceil(filteredData.length / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
@@ -58,39 +86,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 创建新内容
-    const newContent: ContentItem = {
-      note_id: `note_${Date.now()}`,
-      type: body.type || "normal",
-      title: body.title,
-      desc: body.desc,
-      video_url: body.video_url,
-      time: Date.now(),
-      last_update_time: Date.now(),
-      user_id: body.user_id || "user_1",
-      nickname: body.nickname || "用户",
-      avatar: body.avatar || "/default-avatar.png",
-      liked_count: "0",
-      collected_count: "0",
-      comment_count: "0",
-      share_count: "0",
-      ip_location: body.ip_location || "未知",
-      image_list: body.image_list || "",
-      tag_list: body.tag_list || "",
-      last_modify_ts: Date.now(),
-      note_url:
-        body.note_url || `https://www.xiaohongshu.com/explore/${Date.now()}`,
-      source_keyword: body.source_keyword || "默认分类",
-      xsec_token: body.xsec_token || "",
-    };
+    const currentTime = BigInt(Date.now());
+    const noteId = `note_${Date.now()}`;
 
-    // 添加到数据存储
-    contentData.push(newContent);
+    // 创建新内容
+    const newContent = await prisma.contentItem.create({
+      data: {
+        noteId,
+        type: body.type || "normal",
+        title: body.title,
+        desc: body.desc,
+        videoUrl: body.video_url,
+        time: currentTime,
+        lastUpdateTime: currentTime,
+        lastModifyTs: currentTime,
+        userId: body.user_id || "user_1",
+        nickname: body.nickname || "用户",
+        avatar: body.avatar || "/default-avatar.png",
+        likedCount: "0",
+        collectedCount: "0",
+        commentCount: "0",
+        shareCount: "0",
+        ipLocation: body.ip_location || "未知",
+        imageList: body.image_list || "",
+        tagList: body.tag_list || "",
+        noteUrl:
+          body.note_url || `https://www.xiaohongshu.com/explore/${Date.now()}`,
+        sourceKeyword: body.source_keyword || "默认分类",
+        xsecToken: body.xsec_token || "",
+      },
+    });
+
+    // 转换为前端期望的格式
+    const formattedContent: ContentItem = {
+      note_id: newContent.noteId,
+      type: newContent.type,
+      title: newContent.title,
+      desc: newContent.desc,
+      video_url: newContent.videoUrl || undefined,
+      time: Number(newContent.time),
+      last_update_time: Number(newContent.lastUpdateTime),
+      user_id: newContent.userId,
+      nickname: newContent.nickname,
+      avatar: newContent.avatar,
+      liked_count: newContent.likedCount,
+      collected_count: newContent.collectedCount,
+      comment_count: newContent.commentCount,
+      share_count: newContent.shareCount,
+      ip_location: newContent.ipLocation,
+      image_list: newContent.imageList,
+      tag_list: newContent.tagList,
+      last_modify_ts: Number(newContent.lastModifyTs),
+      note_url: newContent.noteUrl,
+      source_keyword: newContent.sourceKeyword,
+      xsec_token: newContent.xsecToken,
+    };
 
     return NextResponse.json(
       {
         success: true,
-        data: newContent,
+        data: formattedContent,
         message: "Content created successfully",
       },
       { status: 201 }

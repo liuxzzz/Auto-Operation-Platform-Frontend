@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// 模拟用户收藏数据存储
-const userCollections: Record<string, Set<string>> = {};
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +14,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const collections = userCollections[userId] || new Set();
+    // 从数据库获取用户收藏的内容ID列表
+    const collections = await prisma.userCollection.findMany({
+      where: { userId },
+      select: { noteId: true },
+    });
+
+    const collectedNoteIds = collections.map(collection => collection.noteId);
 
     return NextResponse.json({
       success: true,
-      data: Array.from(collections),
+      data: collectedNoteIds,
     });
   } catch (error) {
     console.error("Error fetching user collections:", error);
@@ -42,16 +47,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 初始化用户收藏集合
-    if (!userCollections[userId]) {
-      userCollections[userId] = new Set();
+    // 检查内容是否存在
+    const contentExists = await prisma.contentItem.findUnique({
+      where: { noteId },
+    });
+
+    if (!contentExists) {
+      return NextResponse.json(
+        { success: false, error: "Content not found" },
+        { status: 404 }
+      );
     }
 
     if (action === "collect") {
-      userCollections[userId].add(noteId);
+      // 使用 upsert 避免重复收藏
+      await prisma.userCollection.upsert({
+        where: {
+          userId_noteId: {
+            userId,
+            noteId,
+          },
+        },
+        update: {}, // 如果已存在，不做任何更新
+        create: {
+          userId,
+          noteId,
+        },
+      });
     } else if (action === "uncollect") {
-      userCollections[userId].delete(noteId);
+      // 删除收藏记录
+      await prisma.userCollection.deleteMany({
+        where: {
+          userId,
+          noteId,
+        },
+      });
     }
+
+    // 获取更新后的用户收藏列表
+    const updatedCollections = await prisma.userCollection.findMany({
+      where: { userId },
+      select: { noteId: true },
+    });
+
+    const collectedNoteIds = updatedCollections.map(
+      collection => collection.noteId
+    );
 
     return NextResponse.json({
       success: true,
@@ -59,7 +100,7 @@ export async function POST(request: NextRequest) {
         userId,
         noteId,
         action,
-        collections: Array.from(userCollections[userId]),
+        collections: collectedNoteIds,
       },
       message: `Content ${action}ed successfully`,
     });

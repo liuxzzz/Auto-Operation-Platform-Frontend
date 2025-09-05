@@ -8,9 +8,12 @@ export function useContent() {
   const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // 加载内容数据
   const loadContent = useCallback(async () => {
+    if (initialized) return; // 防止重复加载
+
     try {
       setLoading(true);
       setError(null);
@@ -18,12 +21,13 @@ export function useContent() {
       const data = await contentService.getContent({ limit: 100 });
       setAllContent(data);
       setFilteredContent(data);
+      setInitialized(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "加载数据失败");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialized]);
 
   // 按分类筛选内容
   const filterByCategory = useCallback(
@@ -104,10 +108,11 @@ export function useContent() {
     }
   }, []);
 
-  // 初始化加载
+  // 初始化加载 - 只在组件挂载时执行一次
   useEffect(() => {
     loadContent();
-  }, [loadContent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     allContent,

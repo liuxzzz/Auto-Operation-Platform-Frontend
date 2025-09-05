@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// 模拟用户点赞数据存储
-const userLikes: Record<string, Set<string>> = {};
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +14,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const likes = userLikes[userId] || new Set();
+    // 从数据库获取用户点赞的内容ID列表
+    const likes = await prisma.userLike.findMany({
+      where: { userId },
+      select: { noteId: true },
+    });
+
+    const likedNoteIds = likes.map(like => like.noteId);
 
     return NextResponse.json({
       success: true,
-      data: Array.from(likes),
+      data: likedNoteIds,
     });
   } catch (error) {
     console.error("Error fetching user likes:", error);
@@ -42,16 +47,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 初始化用户点赞集合
-    if (!userLikes[userId]) {
-      userLikes[userId] = new Set();
+    // 检查内容是否存在
+    const contentExists = await prisma.contentItem.findUnique({
+      where: { noteId },
+    });
+
+    if (!contentExists) {
+      return NextResponse.json(
+        { success: false, error: "Content not found" },
+        { status: 404 }
+      );
     }
 
     if (action === "like") {
-      userLikes[userId].add(noteId);
+      // 使用 upsert 避免重复点赞
+      await prisma.userLike.upsert({
+        where: {
+          userId_noteId: {
+            userId,
+            noteId,
+          },
+        },
+        update: {}, // 如果已存在，不做任何更新
+        create: {
+          userId,
+          noteId,
+        },
+      });
     } else if (action === "unlike") {
-      userLikes[userId].delete(noteId);
+      // 删除点赞记录
+      await prisma.userLike.deleteMany({
+        where: {
+          userId,
+          noteId,
+        },
+      });
     }
+
+    // 获取更新后的用户点赞列表
+    const updatedLikes = await prisma.userLike.findMany({
+      where: { userId },
+      select: { noteId: true },
+    });
+
+    const likedNoteIds = updatedLikes.map(like => like.noteId);
 
     return NextResponse.json({
       success: true,
@@ -59,7 +98,7 @@ export async function POST(request: NextRequest) {
         userId,
         noteId,
         action,
-        likes: Array.from(userLikes[userId]),
+        likes: likedNoteIds,
       },
       message: `Content ${action}d successfully`,
     });

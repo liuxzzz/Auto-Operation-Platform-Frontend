@@ -1,0 +1,86 @@
+// Prisma schema for 小红书内容管理平台
+// 支持 Vercel Postgres 部署
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// 内容项模型
+model ContentItem {
+  // 主键和基础信息
+  noteId         String   @id @map("note_id")
+  type           String
+  title          String
+  desc           String
+  videoUrl       String?  @map("video_url")
+
+  // 时间戳
+  time           BigInt
+  lastUpdateTime BigInt   @map("last_update_time")
+  lastModifyTs   BigInt   @map("last_modify_ts")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // 用户信息
+  userId         String   @map("user_id")
+  nickname       String
+  avatar         String
+
+  // 统计数据
+  likedCount     String   @default("0") @map("liked_count")
+  collectedCount String   @default("0") @map("collected_count")
+  commentCount   String   @default("0") @map("comment_count")
+  shareCount     String   @default("0") @map("share_count")
+
+  // 位置和媒体信息
+  ipLocation     String   @map("ip_location")
+  imageList      String   @map("image_list")
+  tagList        String   @map("tag_list")
+
+  // URL 和令牌
+  noteUrl        String   @map("note_url")
+  sourceKeyword  String   @map("source_keyword")
+  xsecToken      String   @map("xsec_token")
+
+  // 关系
+  likes          UserLike[]
+  collections    UserCollection[]
+
+  // 索引
+  @@index([sourceKeyword])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("content_items")
+}
+
+// 用户点赞模型
+model UserLike {
+  userId    String      @map("user_id")
+  noteId    String      @map("note_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // 关系
+  content   ContentItem @relation(fields: [noteId], references: [noteId], onDelete: Cascade)
+
+  @@id([userId, noteId])
+  @@map("user_likes")
+}
+
+// 用户收藏模型
+model UserCollection {
+  userId    String      @map("user_id")
+  noteId    String      @map("note_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // 关系
+  content   ContentItem @relation(fields: [noteId], references: [noteId], onDelete: Cascade)
+
+  @@id([userId, noteId])
+  @@map("user_collections")
+}
