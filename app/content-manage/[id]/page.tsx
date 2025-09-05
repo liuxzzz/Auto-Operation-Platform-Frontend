@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Calendar, Upload, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Sparkles, Upload, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -57,6 +57,11 @@ export default function ContentDetail() {
   const handleSubmit = () => {
     // TODO: 实现提交逻辑
     console.log("提交内容:", { title, description });
+  };
+
+  const handleAIGenerate = () => {
+    // TODO: 实现AI生成逻辑
+    console.log("AI一键生成内容");
   };
 
   return (
@@ -131,9 +136,21 @@ export default function ContentDetail() {
 
                 {/* 3. 内容输入框 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    内容描述 <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      内容描述 <span className="text-red-500">*</span>
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAIGenerate}
+                      className="flex items-center space-x-1 text-xs"
+                    >
+                      <Sparkles size={14} />
+                      <span>AI一键生成</span>
+                    </Button>
+                  </div>
                   <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
