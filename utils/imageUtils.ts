@@ -11,8 +11,8 @@ export const getFirstImage = (imageList: string): string => {
   // 分割图片列表，取第一张图片
   const images = imageList
     .split(",")
-    .map((img) => img.trim())
-    .filter((img) => img);
+    .map(img => img.trim())
+    .filter(img => img);
   return images.length > 0 ? images[0] : "";
 };
 
@@ -28,6 +28,6 @@ export const getAllImages = (imageList: string): string[] => {
 
   return imageList
     .split(",")
-    .map((img) => img.trim())
-    .filter((img) => img);
+    .map(img => img.trim())
+    .filter(img => img);
 };

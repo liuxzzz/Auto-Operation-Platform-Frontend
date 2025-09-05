@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+
 import ContentCard from "@/components/ContentCard";
-import { ContentItem } from "@/types/content";
 import { Loading } from "@/components/ui/loading";
+import { ContentItem } from "@/types/content";
 
 export default function ContentPreview() {
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
@@ -25,7 +26,7 @@ export default function ContentPreview() {
           "/data/search_contents_2025-09-04-卫衣.json",
         ];
 
-        const promises = dataFiles.map(async (file) => {
+        const promises = dataFiles.map(async file => {
           const response = await fetch(file);
           if (!response.ok) {
             throw new Error(`Failed to load ${file}`);
@@ -39,7 +40,7 @@ export default function ContentPreview() {
         // 去重（基于note_id）
         const uniqueData = combinedData.filter(
           (item, index, self) =>
-            index === self.findIndex((t) => t.note_id === item.note_id)
+            index === self.findIndex(t => t.note_id === item.note_id)
         );
 
         setAllContent(uniqueData);
@@ -57,7 +58,7 @@ export default function ContentPreview() {
   // 获取所有分类
   const categories = [
     "全部",
-    ...new Set(allContent.map((item) => item.source_keyword)),
+    ...new Set(allContent.map(item => item.source_keyword)),
   ];
 
   // 筛选内容
@@ -66,14 +67,14 @@ export default function ContentPreview() {
       setFilteredContent(allContent);
     } else {
       setFilteredContent(
-        allContent.filter((item) => item.source_keyword === selectedCategory)
+        allContent.filter(item => item.source_keyword === selectedCategory)
       );
     }
   }, [selectedCategory, allContent]);
 
   // 处理点赞
   const handleLike = (noteId: string) => {
-    setLikedItems((prev) => {
+    setLikedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(noteId)) {
         newSet.delete(noteId);
@@ -86,7 +87,7 @@ export default function ContentPreview() {
 
   // 处理收藏
   const handleCollect = (noteId: string) => {
-    setCollectedItems((prev) => {
+    setCollectedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(noteId)) {
         newSet.delete(noteId);
@@ -121,7 +122,7 @@ export default function ContentPreview() {
 
           {/* 分类筛选 */}
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+            {categories.map(category => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -137,7 +138,7 @@ export default function ContentPreview() {
                     (
                     {
                       allContent.filter(
-                        (item) => item.source_keyword === category
+                        item => item.source_keyword === category
                       ).length
                     }
                     )
@@ -159,7 +160,7 @@ export default function ContentPreview() {
 
         {/* 内容网格 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredContent.map((item) => (
+          {filteredContent.map(item => (
             <ContentCard
               key={item.note_id}
               content={item}

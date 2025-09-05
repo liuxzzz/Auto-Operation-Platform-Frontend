@@ -1,0 +1,40 @@
+{
+  "recommendations": [
+    // Essential extensions
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+
+    // React/Next.js specific
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-json",
+
+    // Git and productivity
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    "ms-vscode.vscode-github-issue-notebooks",
+
+    // UI and themes
+    "pkief.material-icon-theme",
+    "zhuangtongfa.material-theme",
+
+    // Utilities
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    "gruntfuggly.todo-tree",
+    "ms-vscode.vscode-json",
+
+    // Optional but useful
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-close-tag",
+    "christian-kohler.npm-intellisense",
+    "ms-vscode.vscode-npm-scripts"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify"
+  ]
+}

@@ -1,10 +1,10 @@
 "use client";
 
+import { Home, FileText, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { cn } from "@/lib/utils";
-import { Home, FileText, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface NavbarProps {
   onClose?: () => void;
@@ -52,7 +52,7 @@ export function Navbar({ onClose, className }: NavbarProps) {
       {/* Navigation items */}
       <div className="flex-1 p-4">
         <ul className="space-y-2">
-          {navItems.map((item) => {
+          {navItems.map(item => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 

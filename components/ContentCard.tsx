@@ -1,6 +1,7 @@
-import React from "react";
 import { Heart, Bookmark } from "lucide-react";
-import { ContentItem, ContentCardProps } from "@/types/content";
+import React from "react";
+
+import { ContentCardProps } from "@/types/content";
 import { getFirstImage } from "@/utils/imageUtils";
 
 export default function ContentCard({

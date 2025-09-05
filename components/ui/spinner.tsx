@@ -1,15 +1,15 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg";
 }
 
 function Spinner({ className, size = "md", ...props }: SpinnerProps) {
   const sizeClasses = {
     sm: "h-4 w-4",
-    md: "h-6 w-6", 
-    lg: "h-8 w-8"
-  }
+    md: "h-6 w-6",
+    lg: "h-8 w-8",
+  };
 
   return (
     <div
@@ -20,7 +20,7 @@ function Spinner({ className, size = "md", ...props }: SpinnerProps) {
       )}
       {...props}
     />
-  )
+  );
 }
 
-export { Spinner }
+export { Spinner };
