@@ -1,14 +1,14 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
   ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -76,12 +76,6 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         <ResizablePanel defaultSize={80}>
           <div className="h-full flex flex-col">
             {/* Desktop Header (optional) */}
-            <header className="hidden lg:flex items-center justify-between p-4 bg-white border-b border-gray-200">
-              <div></div> {/* Empty space for future header content */}
-              <div className="flex items-center space-x-2">
-                {/* Future: user menu, notifications, etc. */}
-              </div>
-            </header>
 
             {/* Main Content */}
             <main className="flex-1 overflow-hidden">{children}</main>
