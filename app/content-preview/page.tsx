@@ -1,101 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import ContentCard from "@/components/ContentCard";
 import { Loading } from "@/components/ui/loading";
-import { ContentItem } from "@/types/content";
+import { useContent, useUserInteractions } from "@/lib";
 
 export default function ContentPreview() {
-  const [allContent, setAllContent] = useState<ContentItem[]>([]);
-  const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("全部");
-  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
-  const [collectedItems, setCollectedItems] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // 加载JSON数据
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const dataFiles = [
-          "/data/search_contents_2025-09-04-舒服干净穿搭.json",
-          "/data/search_contents_2025-09-04-早秋的穿搭.json",
-          "/data/search_contents_2025-09-04-卫衣.json",
-        ];
+  // 使用自定义 Hook 管理内容数据
+  const {
+    allContent,
+    filteredContent,
+    loading,
+    error,
+    filterByCategory,
+    getCategories,
+  } = useContent();
 
-        const promises = dataFiles.map(async file => {
-          const response = await fetch(file);
-          if (!response.ok) {
-            throw new Error(`Failed to load ${file}`);
-          }
-          return response.json();
-        });
-
-        const results = await Promise.all(promises);
-        const combinedData = results.flat();
-
-        // 去重（基于note_id）
-        const uniqueData = combinedData.filter(
-          (item, index, self) =>
-            index === self.findIndex(t => t.note_id === item.note_id)
-        );
-
-        setAllContent(uniqueData);
-        setFilteredContent(uniqueData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "加载数据失败");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  // 使用自定义 Hook 管理用户交互
+  const { handleLike, handleCollect, isLiked, isCollected } =
+    useUserInteractions();
 
   // 获取所有分类
-  const categories = [
-    "全部",
-    ...new Set(allContent.map(item => item.source_keyword)),
-  ];
+  const categories = getCategories();
 
-  // 筛选内容
-  useEffect(() => {
-    if (selectedCategory === "全部") {
-      setFilteredContent(allContent);
-    } else {
-      setFilteredContent(
-        allContent.filter(item => item.source_keyword === selectedCategory)
-      );
-    }
-  }, [selectedCategory, allContent]);
-
-  // 处理点赞
-  const handleLike = (noteId: string) => {
-    setLikedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(noteId)) {
-        newSet.delete(noteId);
-      } else {
-        newSet.add(noteId);
-      }
-      return newSet;
-    });
-  };
-
-  // 处理收藏
-  const handleCollect = (noteId: string) => {
-    setCollectedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(noteId)) {
-        newSet.delete(noteId);
-      } else {
-        newSet.add(noteId);
-      }
-      return newSet;
-    });
+  // 处理分类切换
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    filterByCategory(category);
   };
 
   // 处理卡片点击跳转
@@ -131,7 +65,7 @@ export default function ContentPreview() {
             {categories.map(category => (
               <button
                 key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => handleCategoryChange(category)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === category
                     ? "bg-blue-600 text-white"
@@ -171,8 +105,8 @@ export default function ContentPreview() {
               <ContentCard
                 key={item.note_id}
                 content={item}
-                isLiked={likedItems.has(item.note_id)}
-                isCollected={collectedItems.has(item.note_id)}
+                isLiked={isLiked(item.note_id)}
+                isCollected={isCollected(item.note_id)}
                 onLike={() => handleLike(item.note_id)}
                 onCollect={() => handleCollect(item.note_id)}
                 onCardClick={handleCardClick}
