@@ -3,7 +3,7 @@ export interface ContentItem {
   type: string;
   title: string;
   desc: string;
-  video_url?: string;
+  video_url?: string | null;
   time: number;
   last_update_time: number;
   user_id: string;

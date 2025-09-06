@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { userService } from "@/lib/services";
+// 模拟用户交互数据 - 使用localStorage持久化
+const STORAGE_KEYS = {
+  likes: "demo_user_likes",
+  collections: "demo_user_collections",
+};
 
 export function useUserInteractions(userId: string = "default_user") {
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
@@ -8,17 +12,24 @@ export function useUserInteractions(userId: string = "default_user") {
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // 加载用户交互数据
+  // 从localStorage加载用户交互数据
   const loadUserInteractions = useCallback(async () => {
     if (initialized) return; // 防止重复加载
 
     try {
       setLoading(true);
 
-      const [likes, collections] = await Promise.all([
-        userService.getUserLikes(userId),
-        userService.getUserCollections(userId),
-      ]);
+      // 模拟网络延迟
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 从localStorage读取数据
+      const storedLikes = localStorage.getItem(STORAGE_KEYS.likes);
+      const storedCollections = localStorage.getItem(STORAGE_KEYS.collections);
+
+      const likes = storedLikes ? JSON.parse(storedLikes) : [];
+      const collections = storedCollections
+        ? JSON.parse(storedCollections)
+        : ["demo-1"]; // 默认收藏第一个
 
       setLikedItems(new Set(likes));
       setCollectedItems(new Set(collections));
@@ -28,74 +39,69 @@ export function useUserInteractions(userId: string = "default_user") {
     } finally {
       setLoading(false);
     }
-  }, [userId, initialized]);
+  }, [initialized]);
 
-  // 处理点赞
+  // 处理点赞（使用localStorage持久化）
   const handleLike = useCallback(
     async (noteId: string) => {
       const isLiked = likedItems.has(noteId);
-      const action = isLiked ? "unlike" : "like";
 
       try {
-        const success = await userService.updateUserLikes(
-          userId,
-          noteId,
-          action
-        );
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-        if (success) {
-          setLikedItems(prev => {
-            const newSet = new Set(prev);
-            if (isLiked) {
-              newSet.delete(noteId);
-            } else {
-              newSet.add(noteId);
-            }
-            return newSet;
-          });
-          return true;
-        }
-        return false;
+        setLikedItems(prev => {
+          const newSet = new Set(prev);
+          if (isLiked) {
+            newSet.delete(noteId);
+          } else {
+            newSet.add(noteId);
+          }
+
+          // 持久化到localStorage
+          localStorage.setItem(STORAGE_KEYS.likes, JSON.stringify([...newSet]));
+          return newSet;
+        });
+        return true;
       } catch (error) {
         console.error("Error updating like:", error);
         return false;
       }
     },
-    [userId, likedItems]
+    [likedItems]
   );
 
-  // 处理收藏
+  // 处理收藏（使用localStorage持久化）
   const handleCollect = useCallback(
     async (noteId: string) => {
       const isCollected = collectedItems.has(noteId);
-      const action = isCollected ? "uncollect" : "collect";
 
       try {
-        const success = await userService.updateUserCollections(
-          userId,
-          noteId,
-          action
-        );
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-        if (success) {
-          setCollectedItems(prev => {
-            const newSet = new Set(prev);
-            if (isCollected) {
-              newSet.delete(noteId);
-            } else {
-              newSet.add(noteId);
-            }
-            return newSet;
-          });
-          return true;
-        }
-        return false;
+        setCollectedItems(prev => {
+          const newSet = new Set(prev);
+          if (isCollected) {
+            newSet.delete(noteId);
+          } else {
+            newSet.add(noteId);
+          }
+
+          // 持久化到localStorage
+          localStorage.setItem(
+            STORAGE_KEYS.collections,
+            JSON.stringify([...newSet])
+          );
+          return newSet;
+        });
+        return true;
       } catch (error) {
         console.error("Error updating collection:", error);
         return false;
       }
     },
-    [userId, collectedItems]
+    [collectedItems]
   );
 
   // 检查是否已点赞

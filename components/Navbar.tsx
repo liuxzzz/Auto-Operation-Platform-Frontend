@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, FileText, Settings } from "lucide-react";
+import { Bookmark, Home, Images, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,19 +16,29 @@ export function Navbar({ onClose, className }: NavbarProps) {
 
   const navItems = [
     {
-      href: "/content-preview",
-      label: "内容预览",
+      href: "/",
+      label: "首页",
       icon: Home,
     },
     {
-      href: "/content-manage",
-      label: "内容管理",
-      icon: FileText,
+      href: "/hot-library",
+      label: "爆款库",
+      icon: Sparkles,
     },
     {
-      href: "/settings",
-      label: "设置",
-      icon: Settings,
+      href: "/my-collection",
+      label: "我的收藏",
+      icon: Bookmark,
+    },
+    {
+      href: "/material-manage",
+      label: "素材管理",
+      icon: Images,
+    },
+    {
+      href: "/publish-center",
+      label: "发布中心",
+      icon: Send,
     },
   ];
 
@@ -46,7 +56,7 @@ export function Navbar({ onClose, className }: NavbarProps) {
 
       {/* Desktop header */}
       <div className="hidden lg:block p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold">小红书内容管理分发平台</h2>
+        <h2 className="text-lg font-semibold">羊之甘鹿自媒体自动化运营系统</h2>
       </div>
 
       {/* Navigation items */}
@@ -79,7 +89,9 @@ export function Navbar({ onClose, className }: NavbarProps) {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500">© 2024 小红书内容管理分发平台</p>
+        <p className="text-xs text-gray-500">
+          © 2024 羊之甘鹿自媒体自动化运营系统
+        </p>
       </div>
     </nav>
   );

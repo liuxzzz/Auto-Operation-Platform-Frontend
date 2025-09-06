@@ -20,7 +20,9 @@ export default function ContentDetail() {
 
   // 表单状态
   const [title, setTitle] = useState("");
+  const [expression, setExpression] = useState("");
   const [description, setDescription] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // 查找当前内容
   useEffect(() => {
@@ -56,12 +58,43 @@ export default function ContentDetail() {
 
   const handleSubmit = () => {
     // TODO: 实现提交逻辑
-    console.log("提交内容:", { title, description });
+    console.log("提交内容:", { title, expression, description });
   };
 
-  const handleAIGenerate = () => {
-    // TODO: 实现AI生成逻辑
-    console.log("AI一键生成内容");
+  const handleAIGenerate = async () => {
+    // 检查必要的输入
+    if (!expression.trim() && !description.trim()) {
+      alert("请先输入你的表达或内容描述");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      // 模拟AI生成过程
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // 基于用户输入生成模板内容
+      let generatedContent = "";
+
+      if (expression.trim()) {
+        generatedContent = `✨ ${expression.trim()}\n\n`;
+      }
+
+      if (description.trim()) {
+        generatedContent += `${description.trim()}\n\n`;
+      }
+
+      generatedContent += `这次的分享希望能给大家带来一些灵感！每个人都有自己独特的风格，找到适合自己的才是最重要的。\n\n期待和大家一起交流更多有趣的内容～ 💫`;
+
+      // 将生成的内容填入描述框
+      setDescription(generatedContent);
+    } catch (error) {
+      console.error("AI生成内容失败:", error);
+      alert("AI生成功能暂时不可用，请稍后重试");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -134,7 +167,30 @@ export default function ContentDetail() {
                   </div>
                 </div>
 
-                {/* 3. 内容输入框 */}
+                {/* 3. 你的表达输入框 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    你的表达
+                  </label>
+                  <input
+                    type="text"
+                    value={expression}
+                    onChange={e => setExpression(e.target.value)}
+                    placeholder="请输入你想表达的内容..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                    maxLength={200}
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs text-gray-500">
+                      简短描述你想要表达的核心内容
+                    </p>
+                    <span className="text-xs text-gray-400">
+                      {expression.length}/200
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4. 内容输入框 */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -145,10 +201,14 @@ export default function ContentDetail() {
                       variant="outline"
                       size="sm"
                       onClick={handleAIGenerate}
+                      disabled={isGenerating}
                       className="flex items-center space-x-1 text-xs"
                     >
-                      <Sparkles size={14} />
-                      <span>AI一键生成</span>
+                      <Sparkles
+                        size={14}
+                        className={isGenerating ? "animate-spin" : ""}
+                      />
+                      <span>{isGenerating ? "生成中..." : "AI一键生成"}</span>
                     </Button>
                   </div>
                   <textarea
