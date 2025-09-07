@@ -20,7 +20,7 @@ export function Loading({
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="h-full bg-background flex items-center justify-center">
         {content}
       </div>
     );

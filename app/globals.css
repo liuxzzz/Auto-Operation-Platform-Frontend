@@ -116,7 +116,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
     @apply bg-background text-foreground;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* 确保根容器也有正确的高度 */
+  #__next,
+  [data-nextjs-scroll-focus-boundary] {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
   }
 }
