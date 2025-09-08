@@ -1,115 +1,64 @@
 import { useCallback, useEffect, useState } from "react";
 
-// 模拟用户交互数据 - 使用localStorage持久化
-const STORAGE_KEYS = {
-  likes: "demo_user_likes",
-  collections: "demo_user_collections",
-};
+import { favoriteArticle, getUserFavorites } from "@/api/articles";
 
-export function useUserInteractions(userId: string = "default_user") {
-  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
+export function useUserInteractions(_userId: string = "default_user") {
   const [collectedItems, setCollectedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // 从localStorage加载用户交互数据
+  // 从服务器加载用户交互数据
   const loadUserInteractions = useCallback(async () => {
     if (initialized) return; // 防止重复加载
 
     try {
       setLoading(true);
 
-      // 模拟网络延迟
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 从服务器获取收藏数据
+      let collections: string[] = [];
+      try {
+        const { articles } = await getUserFavorites();
+        collections = articles.map((item: any) => item.note_id) || [];
+      } catch {
+        // 服务器请求失败时，保持空数组，不使用localStorage
+        collections = [];
+      }
 
-      // 从localStorage读取数据
-      const storedLikes = localStorage.getItem(STORAGE_KEYS.likes);
-      const storedCollections = localStorage.getItem(STORAGE_KEYS.collections);
-
-      const likes = storedLikes ? JSON.parse(storedLikes) : [];
-      const collections = storedCollections
-        ? JSON.parse(storedCollections)
-        : ["demo-1"]; // 默认收藏第一个
-
-      setLikedItems(new Set(likes));
       setCollectedItems(new Set(collections));
+
       setInitialized(true);
-    } catch (error) {
-      console.error("Error loading user interactions:", error);
+    } catch {
+      // 加载用户交互数据失败
     } finally {
       setLoading(false);
     }
   }, [initialized]);
 
-  // 处理点赞（使用localStorage持久化）
-  const handleLike = useCallback(
-    async (noteId: string) => {
-      const isLiked = likedItems.has(noteId);
-
-      try {
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        setLikedItems(prev => {
-          const newSet = new Set(prev);
-          if (isLiked) {
-            newSet.delete(noteId);
-          } else {
-            newSet.add(noteId);
-          }
-
-          // 持久化到localStorage
-          localStorage.setItem(STORAGE_KEYS.likes, JSON.stringify([...newSet]));
-          return newSet;
-        });
-        return true;
-      } catch (error) {
-        console.error("Error updating like:", error);
-        return false;
-      }
-    },
-    [likedItems]
-  );
-
-  // 处理收藏（使用localStorage持久化）
+  // 处理收藏（使用真实网络接口）
   const handleCollect = useCallback(
-    async (noteId: string) => {
-      const isCollected = collectedItems.has(noteId);
-
+    async (noteId: string, isCollected: boolean) => {
       try {
-        // 模拟网络延迟
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // 调用真实的收藏接口
+        await favoriteArticle(noteId, isCollected);
 
+        // 更新本地状态
         setCollectedItems(prev => {
           const newSet = new Set(prev);
           if (isCollected) {
-            newSet.delete(noteId);
-          } else {
             newSet.add(noteId);
+          } else {
+            newSet.delete(noteId);
           }
-
-          // 持久化到localStorage
-          localStorage.setItem(
-            STORAGE_KEYS.collections,
-            JSON.stringify([...newSet])
-          );
           return newSet;
         });
+        // 更新
         return true;
-      } catch (error) {
-        console.error("Error updating collection:", error);
+      } catch {
+        // 更新收藏状态失败
         return false;
       }
     },
-    [collectedItems]
-  );
-
-  // 检查是否已点赞
-  const isLiked = useCallback(
-    (noteId: string) => {
-      return likedItems.has(noteId);
-    },
-    [likedItems]
+    []
   );
 
   // 检查是否已收藏
@@ -127,12 +76,9 @@ export function useUserInteractions(userId: string = "default_user") {
   }, []);
 
   return {
-    likedItems,
     collectedItems,
     loading,
-    handleLike,
     handleCollect,
-    isLiked,
     isCollected,
     loadUserInteractions,
   };

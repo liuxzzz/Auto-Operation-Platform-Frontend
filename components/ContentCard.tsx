@@ -6,10 +6,8 @@ import { getFirstImage } from "@/lib/utils/imageUtils";
 
 export default function ContentCard({
   content,
-  onLike,
   onCollect,
   onCardClick,
-  isLiked = false,
   isCollected = false,
 }: ContentCardProps) {
   const formatCount = (count: string) => {
@@ -126,17 +124,8 @@ export default function ContentCard({
           </div>
 
           {/* 点赞信息 */}
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              onLike?.();
-            }}
-            className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors duration-200 flex-shrink-0"
-          >
-            <Heart
-              size={14}
-              className={`${isLiked ? "fill-red-500 text-red-500" : ""}`}
-            />
+          <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors duration-200 flex-shrink-0">
+            <Heart size={14} />
             <span className="text-xs sm:text-sm">
               {formatCount(content.liked_count)}
             </span>

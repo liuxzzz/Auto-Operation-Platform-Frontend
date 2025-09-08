@@ -28,8 +28,7 @@ export default function ContentPreview() {
   } = useContent();
 
   // 使用自定义 Hook 管理用户交互
-  const { handleLike, handleCollect, isLiked, isCollected } =
-    useUserInteractions();
+  const { handleCollect, isCollected } = useUserInteractions();
 
   // 获取所有分类
   const categories = getCategories();
@@ -130,10 +129,10 @@ export default function ContentPreview() {
               <ContentCard
                 key={item.note_id}
                 content={item}
-                isLiked={isLiked(item.note_id)}
                 isCollected={isCollected(item.note_id)}
-                onLike={() => handleLike(item.note_id)}
-                onCollect={() => handleCollect(item.note_id)}
+                onCollect={() =>
+                  handleCollect(item.note_id, !isCollected(item.note_id))
+                }
                 onCardClick={handleCardClick}
               />
             ))}

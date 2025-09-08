@@ -69,7 +69,11 @@ export function Navbar({ onClose, className }: NavbarProps) {
         <ul className="space-y-2">
           {navItems.map(item => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            // 更精确的路径匹配逻辑
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
 
             return (
               <li key={item.href}>

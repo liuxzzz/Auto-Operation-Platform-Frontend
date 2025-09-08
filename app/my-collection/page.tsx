@@ -13,9 +13,7 @@ export default function ContentManage() {
   const {
     collectedItems,
     loading: interactionsLoading,
-    handleLike,
     handleCollect,
-    isLiked,
     isCollected,
   } = useUserInteractions();
 
@@ -26,7 +24,7 @@ export default function ContentManage() {
 
   // 处理卡片点击跳转
   const handleCardClick = (noteId: string) => {
-    router.push(`/content-manage/${noteId}`);
+    router.push(`/publish-center/${noteId}`);
   };
 
   const loading = contentLoading || interactionsLoading;
@@ -78,10 +76,10 @@ export default function ContentManage() {
               <ContentCard
                 key={content.note_id}
                 content={content}
-                onLike={() => handleLike(content.note_id)}
-                onCollect={() => handleCollect(content.note_id)}
+                onCollect={() =>
+                  handleCollect(content.note_id, !isCollected(content.note_id))
+                }
                 onCardClick={() => handleCardClick(content.note_id)}
-                isLiked={isLiked(content.note_id)}
                 isCollected={isCollected(content.note_id)}
               />
             ))}
