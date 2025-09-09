@@ -26,6 +26,9 @@ importers:
       next:
         specifier: 15.5.2
         version: 15.5.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      openai:
+        specifier: ^5.20.0
+        version: 5.20.0
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -1837,6 +1840,18 @@ packages:
   onetime@7.0.0:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
     engines: {node: '>=18'}
+
+  openai@5.20.0:
+    resolution: {integrity: sha512-Bmc2zLM/YWgFrDpXr9hwXqGGDdMmMpE9+qoZPsaHpn0Y/Qk1Vu26hNqXo7+nHdli+sLsXINvS1f8kR3NKhGKmA==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.23.8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -4127,6 +4142,8 @@ snapshots:
   onetime@7.0.0:
     dependencies:
       mimic-function: 5.0.1
+
+  openai@5.20.0: {}
 
   optionator@0.9.4:
     dependencies:

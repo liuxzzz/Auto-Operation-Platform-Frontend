@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { favoriteArticle, getUserFavorites } from "@/api/articles";
+import { ContentItem } from "@/lib/types";
 
 export function useUserInteractions(_userId: string = "default_user") {
   const [collectedItems, setCollectedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  const [collectedData, setCollectedData] = useState<ContentItem[]>([]);
 
   // 从服务器加载用户交互数据
   const loadUserInteractions = useCallback(async () => {
@@ -18,6 +21,7 @@ export function useUserInteractions(_userId: string = "default_user") {
       let collections: string[] = [];
       try {
         const { articles } = await getUserFavorites();
+        setCollectedData(articles);
         collections = articles.map((item: any) => item.note_id) || [];
       } catch {
         // 服务器请求失败时，保持空数组，不使用localStorage
@@ -81,5 +85,6 @@ export function useUserInteractions(_userId: string = "default_user") {
     handleCollect,
     isCollected,
     loadUserInteractions,
+    collectedData,
   };
 }

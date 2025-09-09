@@ -5,10 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { generateContent } from "@/api/ai";
+import { getArticleById } from "@/api/articles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loading } from "@/components/ui/loading";
-import { useContent } from "@/lib";
 import { ContentItem } from "@/lib/types";
 
 export default function ContentDetail() {
@@ -16,9 +16,9 @@ export default function ContentDetail() {
   const router = useRouter();
   const contentId = params.id as string;
 
-  const { allContent, loading: contentLoading } = useContent();
   const [content, setContent] = useState<ContentItem | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // 表单状态
   const [title, setTitle] = useState("");
@@ -26,30 +26,58 @@ export default function ContentDetail() {
   const [description, setDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // 查找当前内容
+  // 从API获取内容数据
   useEffect(() => {
-    if (!contentLoading && allContent.length > 0) {
-      const foundContent = allContent.find(item => item.note_id === contentId);
-      if (foundContent) {
-        setContent(foundContent);
-        // 初始化表单数据
-        setTitle(foundContent.title);
-        setDescription(foundContent.desc);
-      } else {
-        setNotFound(true);
-      }
-    }
-  }, [allContent, contentId, contentLoading]);
+    const fetchContent = async () => {
+      if (!contentId) return;
 
-  if (contentLoading) {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data = await getArticleById(contentId);
+        setContent(data);
+
+        // 初始化表单数据
+        setTitle(data.title || "");
+        setDescription(data.desc || "");
+      } catch {
+        setError("获取内容失败，请稍后重试");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [contentId]);
+
+  if (loading) {
     return <Loading message="正在加载内容..." />;
   }
 
-  if (notFound) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-gray-400 text-6xl mb-4">😵</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">加载失败</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="space-x-2">
+            <Button variant="outline" onClick={() => router.back()}>
+              返回
+            </Button>
+            <Button onClick={() => window.location.reload()}>重试</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!content) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 text-6xl mb-4">📄</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">内容未找到</h3>
           <p className="text-gray-600 mb-4">该内容可能已被删除或不存在</p>
           <Button onClick={() => router.back()}>返回</Button>
@@ -60,7 +88,7 @@ export default function ContentDetail() {
 
   const handleSubmit = () => {
     // TODO: 实现提交逻辑
-    console.log("提交内容:", { title, expression, description });
+    // 提交内容: { title, expression, description }
   };
 
   const handleAIGenerate = async () => {
@@ -77,22 +105,10 @@ export default function ContentDetail() {
       const result = await generateContent(expression, description);
 
       // 基于用户输入生成模板内容
-      let generatedContent = "";
+      const generatedContent = result.text;
 
-      if (expression.trim()) {
-        generatedContent = `✨ ${expression.trim()}\n\n`;
-      }
-
-      if (description.trim()) {
-        generatedContent += `${description.trim()}\n\n`;
-      }
-
-      generatedContent += `这次的分享希望能给大家带来一些灵感！每个人都有自己独特的风格，找到适合自己的才是最重要的。\n\n期待和大家一起交流更多有趣的内容～ 💫`;
-
-      // 将生成的内容填入描述框
       setDescription(generatedContent);
-    } catch (error) {
-      console.error("AI生成内容失败:", error);
+    } catch {
       alert("AI生成功能暂时不可用，请稍后重试");
     } finally {
       setIsGenerating(false);

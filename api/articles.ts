@@ -20,6 +20,14 @@ export const getArticles = async (
   return data;
 };
 
+export const getArticleById = async (articleId: string) => {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/articles/${articleId}`
+  );
+  const { data } = await response.json();
+  return data;
+};
+
 // 获取用户收藏列表
 export const getUserFavorites = async () => {
   const response = await fetch(
