@@ -61,7 +61,7 @@ export function Navbar({ onClose, className }: NavbarProps) {
 
       {/* Desktop header */}
       <div className="hidden lg:block p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold">羊之甘鹿自媒体自动化运营系统</h2>
+        <h2 className="text-lg font-semibold">自媒体自动化运营系统</h2>
       </div>
 
       {/* Navigation items */}
@@ -98,9 +98,7 @@ export function Navbar({ onClose, className }: NavbarProps) {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
-          © 2024 羊之甘鹿自媒体自动化运营系统
-        </p>
+        <p className="text-xs text-gray-500">© 2024 自媒体自动化运营系统</p>
       </div>
     </nav>
   );

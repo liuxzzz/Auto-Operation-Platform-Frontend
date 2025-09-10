@@ -1,7 +1,10 @@
-export const generateContent = async (
-  expression: string,
-  description: string
-) => {
+export const generateContent = async ({
+  model,
+  content,
+}: {
+  model: string;
+  content: { expression: string; title: string };
+}) => {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/ai/generate-docs`,
     {
@@ -10,8 +13,8 @@ export const generateContent = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        expression,
-        description,
+        model,
+        content,
       }),
     }
   );

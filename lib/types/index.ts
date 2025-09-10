@@ -13,3 +13,4 @@ export type {
 
 export type { UserAction as UserActionRequest } from "./api";
 export * from "./content";
+export * from "./platform";

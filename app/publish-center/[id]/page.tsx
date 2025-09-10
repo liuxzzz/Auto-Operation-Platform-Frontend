@@ -3,12 +3,20 @@
 import { ArrowLeft, Calendar, Sparkles, Upload, Users } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { generateContent } from "@/api/ai";
 import { getArticleById } from "@/api/articles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loading } from "@/components/ui/loading";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ContentItem } from "@/lib/types";
 
 export default function ContentDetail() {
@@ -25,6 +33,7 @@ export default function ContentDetail() {
   const [expression, setExpression] = useState("");
   const [description, setDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("deepseek");
 
   // 从API获取内容数据
   useEffect(() => {
@@ -91,6 +100,11 @@ export default function ContentDetail() {
     // 提交内容: { title, expression, description }
   };
 
+  const modelOptions = [
+    { value: "openai", label: "GPT" },
+    { value: "deepseek", label: "DeepSeek" },
+  ];
+
   const handleAIGenerate = async () => {
     // 检查必要的输入
     if (!expression.trim() && !description.trim()) {
@@ -102,14 +116,22 @@ export default function ContentDetail() {
 
     try {
       // 模拟AI生成过程
-      const result = await generateContent(expression, description);
+      const result = await generateContent({
+        model: selectedModel,
+        content: {
+          expression,
+          title,
+        },
+      });
 
       // 基于用户输入生成模板内容
       const generatedContent = result.text;
 
       setDescription(generatedContent);
     } catch {
-      alert("AI生成功能暂时不可用，请稍后重试");
+      toast("AI生成失败", {
+        description: "请稍后重试",
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -214,20 +236,39 @@ export default function ContentDetail() {
                     <label className="block text-sm font-medium text-gray-700">
                       内容描述 <span className="text-red-500">*</span>
                     </label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAIGenerate}
-                      disabled={isGenerating}
-                      className="flex items-center space-x-1 text-xs"
-                    >
-                      <Sparkles
-                        size={14}
-                        className={isGenerating ? "animate-spin" : ""}
-                      />
-                      <span>{isGenerating ? "生成中..." : "AI一键生成"}</span>
-                    </Button>
+
+                    <div className="w-full flex-1 flex items-center gap-2 justify-end">
+                      <Select
+                        value={selectedModel}
+                        onValueChange={setSelectedModel}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择生成方式" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {modelOptions.map(model => (
+                            <SelectItem key={model.value} value={model.value}>
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAIGenerate}
+                        disabled={isGenerating}
+                        className="h-[36px]"
+                      >
+                        <Sparkles
+                          size={14}
+                          className={isGenerating ? "animate-spin" : ""}
+                        />
+                        <span>{isGenerating ? "生成中..." : "AI一键生成"}</span>
+                      </Button>
+                    </div>
                   </div>
                   <textarea
                     value={description}
