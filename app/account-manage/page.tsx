@@ -9,10 +9,10 @@ import { AddAccountDialog } from "./components/AddAccountDialog";
 export default function AccountManage() {
   const tabs = [
     { id: "全部", label: "全部" },
-    { id: Platform.KUAISHOU, label: Platform.KUAISHOU },
-    { id: Platform.DOUYIN, label: Platform.DOUYIN },
-    { id: Platform.WEIXIN_VIDEO, label: Platform.WEIXIN_VIDEO },
-    { id: Platform.XIAOHONGSHU, label: Platform.XIAOHONGSHU },
+    { id: Platform.KUAISHOU, label: "快手" },
+    { id: Platform.DOUYIN, label: "抖音" },
+    { id: Platform.WEIXIN_VIDEO, label: "视频号" },
+    { id: Platform.XIAOHONGSHU, label: "小红书" },
   ];
 
   return (

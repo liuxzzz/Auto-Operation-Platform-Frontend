@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { createAccount } from "@/api/account";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,15 +27,15 @@ interface AddAccountDialogProps {
 }
 
 export function AddAccountDialog({ children }: AddAccountDialogProps) {
-  const [platform, setPlatform] = useState("");
-  const [accountName, setAccountName] = useState("");
+  const [platform, setPlatform] = useState(Platform.XIAOHONGSHU);
+  const [accountName, setAccountName] = useState("test");
   const [open, setOpen] = useState(false);
 
   const platforms = [
-    { value: Platform.KUAISHOU, label: Platform.KUAISHOU },
-    { value: Platform.DOUYIN, label: Platform.DOUYIN },
-    { value: Platform.WEIXIN_VIDEO, label: Platform.WEIXIN_VIDEO },
-    { value: Platform.XIAOHONGSHU, label: Platform.XIAOHONGSHU },
+    { value: Platform.KUAISHOU, label: "快手" },
+    { value: Platform.DOUYIN, label: "抖音" },
+    { value: Platform.WEIXIN_VIDEO, label: "视频号" },
+    { value: Platform.XIAOHONGSHU, label: "小红书" },
   ];
 
   const handleSubmit = () => {
@@ -46,15 +47,16 @@ export function AddAccountDialog({ children }: AddAccountDialogProps) {
     // 添加账号: { platform, accountName }
 
     // 重置表单
-    setPlatform("");
-    setAccountName("");
+    setPlatform(Platform.XIAOHONGSHU);
+    setAccountName("test");
+    createAccount({ platform, account_name: accountName });
 
     setOpen(false);
   };
 
   const handleCancel = () => {
-    setPlatform("");
-    setAccountName("");
+    setPlatform(Platform.XIAOHONGSHU);
+    setAccountName("test");
     setOpen(false);
   };
 
@@ -74,7 +76,10 @@ export function AddAccountDialog({ children }: AddAccountDialogProps) {
               平台
             </label>
             <div className="w-full flex-1">
-              <Select value={platform} onValueChange={setPlatform}>
+              <Select
+                value={platform}
+                onValueChange={value => setPlatform(value as Platform)}
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="选择平台" />
                 </SelectTrigger>

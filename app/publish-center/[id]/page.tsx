@@ -137,6 +137,19 @@ export default function ContentDetail() {
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(description);
+    toast("复制成功");
+  };
+
+  const handleAddTag = (tag: string) => {
+    const newDescription = description + (description ? "\n" : "") + tag;
+    setDescription(newDescription);
+    toast("标签已添加");
+  };
+
+  const tagList = ["#小红书市集秋上新[话题]#", "#秋天的第一套新衣[话题]#"];
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* 头部导航 */}
@@ -238,6 +251,14 @@ export default function ContentDetail() {
                     </label>
 
                     <div className="w-full flex-1 flex items-center gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-[36px]"
+                        onClick={handleCopy}
+                      >
+                        一键复制
+                      </Button>
                       <Select
                         value={selectedModel}
                         onValueChange={setSelectedModel}
@@ -285,6 +306,29 @@ export default function ContentDetail() {
                     <span className="text-xs text-gray-400">
                       {description.length}/2000
                     </span>
+                  </div>
+
+                  {/* Tag列表区域 */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      热门标签
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {tagList.map((tag, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddTag(tag)}
+                          className="text-xs px-3 py-1 h-auto bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+                        >
+                          {tag}
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      点击标签可添加到内容描述中
+                    </p>
                   </div>
                 </div>
               </div>

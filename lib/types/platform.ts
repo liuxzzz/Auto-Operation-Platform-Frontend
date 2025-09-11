@@ -1,9 +1,9 @@
 // 平台枚举类型
 export enum Platform {
-  KUAISHOU = "快手",
-  DOUYIN = "抖音",
-  WEIXIN_VIDEO = "视频号",
-  XIAOHONGSHU = "小红书",
+  KUAISHOU = "kuaishou",
+  DOUYIN = "douyin",
+  WEIXIN_VIDEO = "weixin_video",
+  XIAOHONGSHU = "xiaohongshu",
 }
 
 // 平台相关类型

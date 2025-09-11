@@ -11,6 +11,7 @@ export type {
   User,
 } from "./api";
 
+export * from "./account";
 export type { UserAction as UserActionRequest } from "./api";
 export * from "./content";
 export * from "./platform";
