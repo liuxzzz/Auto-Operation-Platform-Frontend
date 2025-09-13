@@ -26,6 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -33,7 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Account, ContentItem, Platform, PlatformOption } from "@/lib/types";
 
 export default function ContentDetail() {
@@ -58,7 +58,9 @@ export default function ContentDetail() {
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | "">("");
   const [releaseTime, setReleaseTime] = useState<Date | undefined>(undefined);
-  const [isScheduled, setIsScheduled] = useState(false); // false = 立即发布, true = 定时发布
+  const [publishMode, setPublishMode] = useState<"immediate" | "scheduled">(
+    "immediate"
+  ); // 发布模式
 
   // 获取账号列表
   const fetchAccounts = async () => {
@@ -111,6 +113,18 @@ export default function ContentDetail() {
     fetchAccounts();
   }, []);
 
+  // 当平台改变时，重置账号选择并过滤账号列表
+  useEffect(() => {
+    if (selectedPlatform) {
+      setSelectedAccount(""); // 重置账号选择
+    }
+  }, [selectedPlatform]);
+
+  // 过滤出支持当前选择平台的账号
+  const filteredAccounts = selectedPlatform
+    ? accounts.filter(account => account.platform === selectedPlatform)
+    : accounts;
+
   // 只在编辑模式下显示加载和错误状态
   if (isEditMode && loading) {
     return <Loading message="正在加载内容..." />;
@@ -147,9 +161,83 @@ export default function ContentDetail() {
     );
   }
 
+  const verifyForm = (): { isValid: boolean; message?: string } => {
+    // 验证标题
+    if (!title.trim()) {
+      return { isValid: false, message: "请输入内容标题" };
+    }
+    // 验证发布平台
+    if (!selectedPlatform) {
+      return { isValid: false, message: "请选择发布平台" };
+    }
+
+    // 验证发布账号
+    if (!selectedAccount) {
+      return { isValid: false, message: "请选择发布账号" };
+    }
+
+    // 验证定时发布的时间
+    if (publishMode === "scheduled") {
+      if (!releaseTime) {
+        return { isValid: false, message: "请选择发布时间" };
+      }
+
+      // 验证发布时间不能是过去的时间
+      const now = new Date();
+      if (releaseTime <= now) {
+        return { isValid: false, message: "发布时间必须是未来的时间" };
+      }
+    }
+
+    return { isValid: true };
+  };
+
   const handleSubmit = () => {
-    // TODO: 实现提交逻辑
-    // 提交内容: { title, expression, description, platform: selectedPlatform }
+    // 执行表单验证
+    const validation = verifyForm();
+    if (!validation.isValid) {
+      toast("提交失败", {
+        description: validation.message,
+      });
+      return;
+    }
+
+    // 获取选中的账号信息
+    const selectedAccountData = accounts.find(
+      account => account.id === selectedAccount
+    );
+    if (!selectedAccountData) {
+      toast("提交失败", {
+        description: "账号信息获取失败，请重新选择",
+      });
+      return;
+    }
+
+    // 准备提交数据
+    const _submitData = {
+      title: title.trim(),
+      description: description.trim(),
+      platform: selectedPlatform,
+      account: {
+        id: selectedAccount,
+        name: selectedAccountData.account_name,
+        platform: selectedAccountData.platform,
+      },
+      publishMode,
+      releaseTime: publishMode === "scheduled" ? releaseTime : undefined,
+    };
+
+    console.log("提交数据:", _submitData);
+    // TODO: 调用API提交数据
+    // console.log("提交数据:", submitData);
+
+    toast("提交成功", {
+      description:
+        publishMode === "immediate" ? "内容已发布" : "内容已安排定时发布",
+    });
+
+    // 提交成功后可以跳转或重置表单
+    // router.push("/publish-center");
   };
 
   const handleSaveDraft = () => {
@@ -446,24 +534,42 @@ export default function ContentDetail() {
                   <Select
                     value={selectedAccount}
                     onValueChange={setSelectedAccount}
-                    disabled={accountsLoading}
+                    disabled={
+                      accountsLoading ||
+                      !selectedPlatform ||
+                      filteredAccounts.length === 0
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <div className="flex items-center">
                         <User className="mr-2 h-4 w-4 text-gray-500" />
                         <SelectValue
                           placeholder={
-                            accountsLoading ? "加载中..." : "请选择发布账号..."
+                            accountsLoading
+                              ? "加载中..."
+                              : !selectedPlatform
+                                ? "请先选择发布平台"
+                                : filteredAccounts.length === 0
+                                  ? "该平台暂无可用账号"
+                                  : "请选择发布账号..."
                           }
                         />
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      {accounts.map(account => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.account_name}
-                        </SelectItem>
-                      ))}
+                      {filteredAccounts.length > 0 ? (
+                        filteredAccounts.map(account => (
+                          <SelectItem key={account.id} value={account.id}>
+                            {account.account_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-gray-500">
+                          {selectedPlatform
+                            ? "该平台暂无可用账号"
+                            : "请先选择发布平台"}
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500 mt-1">
@@ -474,26 +580,45 @@ export default function ContentDetail() {
                 {/* 发布模式和时间选择 */}
                 <div className="space-y-4">
                   {/* 发布模式选择 */}
-                  <div className="flex flex-col">
-                    <Label className="text-sm font-medium  mb-2">
-                      发布模式 <span className="text-red-500">*</span>
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">
+                      发布时间 <span className="text-red-500">*</span>
                     </Label>
-                    <div className="flex items-center ">
-                      <p className="text-xs text-gray-500 mr-2">
-                        {isScheduled ? "定时发布" : "立即发布"}
-                      </p>
-                      <Switch
-                        checked={isScheduled}
-                        onCheckedChange={setIsScheduled}
-                      />
-                    </div>
+                    <RadioGroup
+                      value={publishMode}
+                      onValueChange={(value: "immediate" | "scheduled") =>
+                        setPublishMode(value)
+                      }
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="immediate" id="immediate" />
+                        <Label
+                          htmlFor="immediate"
+                          className="text-sm font-normal cursor-pointer flex items-center"
+                        >
+                          立即发布
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="scheduled" id="scheduled" />
+                        <Label
+                          htmlFor="scheduled"
+                          className="text-sm font-normal cursor-pointer flex items-center"
+                        >
+                          定时发布
+                        </Label>
+                      </div>
+                    </RadioGroup>
                   </div>
 
                   {/* 条件显示时间选择器 */}
-                  {isScheduled && (
-                    <div>
-                      <Label htmlFor="date" className="mb-2">
-                        发布时间
+                  {publishMode === "scheduled" && (
+                    <div className="ml-6 pl-4 border-l-2 border-blue-100">
+                      <Label
+                        htmlFor="date"
+                        className="mb-2 block text-sm font-medium"
+                      >
+                        选择发布时间
                       </Label>
                       <Popover
                         open={datePickerOpen}
@@ -505,7 +630,7 @@ export default function ContentDetail() {
                             data-empty={!releaseTime}
                             className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
                           >
-                            <CalendarIcon />
+                            <CalendarIcon className="mr-2 h-4 w-4" />
                             {releaseTime ? (
                               format(releaseTime, "PPP")
                             ) : (
@@ -525,6 +650,9 @@ export default function ContentDetail() {
                           />
                         </PopoverContent>
                       </Popover>
+                      <p className="text-xs text-gray-500 mt-1">
+                        选择内容发布的具体时间
+                      </p>
                     </div>
                   )}
                 </div>
@@ -546,12 +674,9 @@ export default function ContentDetail() {
                   <Button
                     onClick={handleSubmit}
                     disabled={
-                      !title.trim() ||
-                      !description.trim() ||
-                      !selectedPlatform ||
-                      !selectedAccount
+                      !title.trim() || !selectedPlatform || !selectedAccount
                     }
-                    className="px-8"
+                    className="px-8 cursor-pointer"
                   >
                     保存并发布
                   </Button>
