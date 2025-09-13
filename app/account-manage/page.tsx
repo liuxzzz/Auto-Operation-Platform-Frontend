@@ -257,6 +257,7 @@ export default function AccountManage() {
         <AddAccountDialog
           editAccount={editingAccount}
           onEditComplete={handleEditComplete}
+          onRefreshAccountList={fetchAccounts}
         >
           <div style={{ display: "none" }} />
         </AddAccountDialog>

@@ -31,12 +31,14 @@ interface AddAccountDialogProps {
   children: React.ReactNode;
   editAccount?: Account;
   onEditComplete?: () => void;
+  onRefreshAccountList?: () => void;
 }
 
 export function AddAccountDialog({
   children,
   editAccount,
   onEditComplete,
+  onRefreshAccountList,
 }: AddAccountDialogProps) {
   const isEditMode = !!editAccount;
   const [platform, setPlatform] = useState(
@@ -94,6 +96,8 @@ export function AddAccountDialog({
       // 重置表单
       setPlatform(Platform.XIAOHONGSHU);
       setAccountName("test");
+      //重新获取账号列表
+
       // setOpen(false);
     }
   };
@@ -138,7 +142,7 @@ export function AddAccountDialog({
             setOpen(false);
             toast.success("添加账号成功");
             setSseConnecting(false);
-
+            onRefreshAccountList?.();
             //重新获取账号信息
           }, 1000);
         } else {

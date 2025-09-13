@@ -17,7 +17,7 @@ export default function ContentManage() {
 
   // 处理卡片点击跳转
   const handleCardClick = (noteId: string) => {
-    router.push(`/publish-center/${noteId}`);
+    router.push(`/publish-center?id=${noteId}`);
   };
 
   const loading = interactionsLoading;
