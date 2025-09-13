@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { getAccounts } from "@/api/account";
 import { generateContent } from "@/api/ai";
 import { getArticleById } from "@/api/articles";
+import { uploadFile } from "@/api/publish";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { Account, ContentItem, Platform, PlatformOption } from "@/lib/types";
 
 export default function ContentDetail() {
@@ -61,6 +63,11 @@ export default function ContentDetail() {
   const [publishMode, setPublishMode] = useState<"immediate" | "scheduled">(
     "immediate"
   ); // 发布模式
+
+  // 图片上传相关状态
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]); // 已上传的图片URL列表
+  const [uploadingImages, setUploadingImages] = useState<boolean[]>([]); // 上传状态
+  const [dragOver, setDragOver] = useState(false); // 拖拽状态
 
   // 获取账号列表
   const fetchAccounts = async () => {
@@ -225,9 +232,10 @@ export default function ContentDetail() {
       },
       publishMode,
       releaseTime: publishMode === "scheduled" ? releaseTime : undefined,
+      images: uploadedImages, // 包含上传的图片URL列表
     };
 
-    console.log("提交数据:", _submitData);
+    // console.log("提交数据:", _submitData);
     // TODO: 调用API提交数据
     // console.log("提交数据:", submitData);
 
@@ -303,6 +311,103 @@ export default function ContentDetail() {
 
   const tagList = ["#小红书市集秋上新[话题]#", "#秋天的第一套新衣[话题]#"];
 
+  // 图片上传相关函数
+  const handleFileUpload = async (files: FileList) => {
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(file => {
+      // 验证文件类型
+      if (!file.type.startsWith("image/")) {
+        toast("文件类型错误", {
+          description: `${file.name} 不是有效的图片文件`,
+        });
+        return false;
+      }
+      // 文件大小验证已取消
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // 限制最多上传18张图片
+    if (uploadedImages.length + validFiles.length > 18) {
+      toast("图片数量超限", {
+        description: "最多只能上传18张图片",
+      });
+      return;
+    }
+
+    // 为每个文件添加上传状态
+    const newUploadingStates = new Array(validFiles.length).fill(true);
+    setUploadingImages(prev => [...prev, ...newUploadingStates]);
+
+    // 并行上传所有文件
+    const uploadPromises = validFiles.map(async (file, _index) => {
+      try {
+        const result = await uploadFile(file);
+
+        if (result.code === 0 && result.data?.object_key) {
+          return result.data.file_url;
+        } else {
+          throw new Error(result.message || "上传失败");
+        }
+      } catch (error) {
+        // console.error("上传失败:", error);
+        toast("上传失败", {
+          description: `${file.name} 上传失败: ${error instanceof Error ? error.message : "未知错误"}`,
+        });
+        return null;
+      }
+    });
+
+    // 等待所有上传完成
+    const results = await Promise.all(uploadPromises);
+    const successfulUploads = results.filter(url => url !== null) as string[];
+
+    // 更新状态
+    setUploadedImages(prev => [...prev, ...successfulUploads]);
+    setUploadingImages(prev => prev.slice(0, -validFiles.length));
+
+    if (successfulUploads.length > 0) {
+      toast("上传成功", {
+        description: `成功上传 ${successfulUploads.length} 张图片`,
+      });
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files);
+    }
+    // 清空input值，允许重复选择同一文件
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(false);
+
+    const files = event.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragOver(false);
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    toast("图片已删除");
+  };
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* 头部导航 */}
@@ -336,20 +441,115 @@ export default function ContentDetail() {
               </h2>
 
               <div className="space-y-6">
-                {/* 1. 上传图片部分 - 占位符 */}
+                {/* 1. 上传图片部分 */}
                 <div>
-                  <Label className="block text-sm font-medium  mb-2">
+                  <Label className="block text-sm font-medium mb-2">
                     图片上传
+                    <span className="text-gray-500 ml-2">
+                      ({uploadedImages.length}/18)
+                    </span>
                   </Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                  {/* 上传区域 */}
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                      dragOver
+                        ? "border-blue-400 bg-blue-50"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() =>
+                      document.getElementById("file-input")?.click()
+                    }
+                  >
+                    <input
+                      id="file-input"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
                     <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <p className="text-sm text-gray-600">
                       点击上传图片或拖拽图片到此处
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      支持 JPG、PNG 格式，最大 10MB
+                      支持 JPG、PNG 格式，最多18张
                     </p>
                   </div>
+
+                  {/* 图片预览区域 */}
+                  {(uploadedImages.length > 0 ||
+                    uploadingImages.some(Boolean)) && (
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          已上传图片
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          {uploadedImages.length} 张图片
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {/* 已上传的图片 */}
+                        {uploadedImages.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                              <img
+                                src={imageUrl}
+                                alt={`上传的图片 ${index + 1}`}
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                              />
+                            </div>
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                removeImage(index);
+                              }}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-all duration-200 opacity-0 group-hover:opacity-100 shadow-lg"
+                              title="删除图片"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* 上传中的图片占位符 */}
+                        {uploadingImages
+                          .map((isUploading, index) =>
+                            isUploading ? (
+                              <div
+                                key={`uploading-${index}`}
+                                className="relative"
+                              >
+                                <div className="aspect-square rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 flex flex-col items-center justify-center">
+                                  <Spinner
+                                    size="md"
+                                    className="mb-3 text-blue-500"
+                                  />
+                                  <p className="text-xs text-blue-600 font-medium">
+                                    上传中...
+                                  </p>
+                                </div>
+                              </div>
+                            ) : null
+                          )
+                          .filter(Boolean)}
+                      </div>
+
+                      {/* 图片操作提示 */}
+                      {uploadedImages.length > 0 && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs text-blue-700">
+                            💡 提示：悬停图片可查看详情，点击右上角 × 可删除图片
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Title输入框 */}
