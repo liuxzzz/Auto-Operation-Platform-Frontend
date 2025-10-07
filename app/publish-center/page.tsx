@@ -38,13 +38,15 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Account, ContentItem, Platform, PlatformOption } from "@/lib/types";
-import { publishContentRequest } from "@/types";
+import { DraftItem, publishContentRequest } from "@/types";
 
 export default function ContentDetail() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const contentId = searchParams.get("id");
+  const draftId = searchParams.get("draftId");
   const isEditMode = !!contentId; // 判断是否为编辑模式
+  const isDraftMode = !!draftId; // 判断是否为草稿编辑模式
 
   const [content, setContent] = useState<ContentItem | null>(null);
   const [loading, setLoading] = useState(isEditMode); // 只有在编辑模式下才需要加载
@@ -75,6 +77,9 @@ export default function ContentDetail() {
   const [uploadedImageOnLocal, setUploadedImageOnLocal] = useState<string[]>(
     []
   );
+
+  // 草稿相关状态
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(draftId);
 
   // 获取账号列表
   const fetchAccounts = async () => {
@@ -126,6 +131,49 @@ export default function ContentDetail() {
   useEffect(() => {
     fetchAccounts();
   }, []);
+
+  // 从草稿加载数据
+  useEffect(() => {
+    if (isDraftMode && draftId) {
+      try {
+        const savedDrafts = localStorage.getItem("content_drafts");
+        if (savedDrafts) {
+          const drafts: DraftItem[] = JSON.parse(savedDrafts);
+          const draft = drafts.find(d => d.id === draftId);
+
+          if (draft) {
+            // 加载草稿数据到表单
+            setTitle(draft.title || "");
+            setDescription(draft.description || "");
+            setExpression(draft.expression || "");
+            setSelectedPlatform(draft.platform as Platform);
+            setSelectedAccount(draft.account || "");
+            setPublishMode(draft.publishMode as "immediate" | "scheduled");
+            setUploadedImages(draft.images || []);
+            setUploadedImageOnLocal(draft.uploadedImageOnLocal || []);
+
+            if (draft.releaseTime) {
+              setReleaseTime(new Date(draft.releaseTime));
+            }
+            if (draft.releaseTimeValue) {
+              setReleaseTimeValue(draft.releaseTimeValue);
+            }
+
+            setCurrentDraftId(draftId);
+          } else {
+            toast("草稿未找到", {
+              description: "该草稿可能已被删除",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("加载草稿失败:", error);
+        toast("加载草稿失败", {
+          description: "草稿数据可能已损坏",
+        });
+      }
+    }
+  }, [draftId, isDraftMode]);
 
   // 当平台改变时，重置账号选择并过滤账号列表
   useEffect(() => {
@@ -265,14 +313,84 @@ export default function ContentDetail() {
         publishMode === "immediate" ? "内容已发布" : "内容已安排定时发布",
     });
 
+    // 如果是从草稿编辑的，删除草稿
+    if (currentDraftId) {
+      try {
+        const savedDrafts = localStorage.getItem("content_drafts");
+        if (savedDrafts) {
+          const drafts: DraftItem[] = JSON.parse(savedDrafts);
+          const updatedDrafts = drafts.filter(d => d.id !== currentDraftId);
+          localStorage.setItem("content_drafts", JSON.stringify(updatedDrafts));
+        }
+      } catch (error) {
+        console.error("删除草稿失败:", error);
+      }
+    }
+
     // 提交成功后可以跳转或重置表单
     // router.push("/publish-center");
   };
 
   const handleSaveDraft = () => {
-    toast("功能暂未开发", {
-      description: "存草稿功能正在开发中，敬请期待",
-    });
+    // 基础验证
+    if (!title.trim()) {
+      toast("保存失败", {
+        description: "请至少输入标题",
+      });
+      return;
+    }
+
+    try {
+      const now = new Date().toISOString();
+
+      // 准备草稿数据
+      const draftData: DraftItem = {
+        id: currentDraftId || `draft_${Date.now()}`,
+        title: title.trim(),
+        description: description.trim(),
+        expression: expression.trim(),
+        platform: selectedPlatform as string,
+        account: selectedAccount,
+        publishMode,
+        releaseTime: releaseTime?.toISOString(),
+        releaseTimeValue,
+        images: uploadedImages,
+        uploadedImageOnLocal,
+        createdAt: currentDraftId
+          ? // 如果是更新现有草稿，保留原创建时间
+            JSON.parse(localStorage.getItem("content_drafts") || "[]").find(
+              (d: DraftItem) => d.id === currentDraftId
+            )?.createdAt || now
+          : now,
+        updatedAt: now,
+      };
+
+      // 从 localStorage 获取现有草稿
+      const savedDrafts = localStorage.getItem("content_drafts");
+      const drafts: DraftItem[] = savedDrafts ? JSON.parse(savedDrafts) : [];
+
+      // 检查是否是更新现有草稿
+      const existingIndex = drafts.findIndex(d => d.id === draftData.id);
+
+      if (existingIndex !== -1) {
+        // 更新现有草稿
+        drafts[existingIndex] = draftData;
+        toast("草稿已更新");
+      } else {
+        // 添加新草稿
+        drafts.push(draftData);
+        setCurrentDraftId(draftData.id);
+        toast("草稿已保存");
+      }
+
+      // 保存到 localStorage
+      localStorage.setItem("content_drafts", JSON.stringify(drafts));
+    } catch (error) {
+      console.error("保存草稿失败:", error);
+      toast("保存失败", {
+        description: "请稍后重试",
+      });
+    }
   };
 
   const modelOptions = [
@@ -462,7 +580,7 @@ export default function ContentDetail() {
               返回
             </Button>
             <h1 className="text-xl font-semibold text-gray-900">
-              {isEditMode ? "编辑内容" : "创建内容"}
+              {isDraftMode ? "编辑草稿" : isEditMode ? "编辑内容" : "创建内容"}
             </h1>
           </div>
         </div>

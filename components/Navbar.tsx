@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Send, Sparkles, User } from "lucide-react";
+import { Bookmark, FileEdit, Send, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -29,6 +29,11 @@ export function Navbar({ onClose, className }: NavbarProps) {
       href: "/my-collection",
       label: "我的收藏",
       icon: Bookmark,
+    },
+    {
+      href: "/draft-box",
+      icon: FileEdit,
+      label: "草稿箱",
     },
     {
       href: "/publish-center",
