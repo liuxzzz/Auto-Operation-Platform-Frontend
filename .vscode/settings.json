@@ -67,7 +67,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -151,7 +151,7 @@
 
   // Workbench settings
   "workbench.colorTheme": "Default Dark+",
-  "workbench.iconTheme": "material-icon-theme",
+  "workbench.iconTheme": "vs-seti",
   "workbench.startupEditor": "newUntitledFile",
   "workbench.editor.enablePreview": false,
   "workbench.editor.enablePreviewFromQuickOpen": false,

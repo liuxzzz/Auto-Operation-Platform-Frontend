@@ -1,6 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -16,7 +17,7 @@ import { toast } from "sonner";
 import { getAccounts } from "@/api/account";
 import { generateContent } from "@/api/ai";
 import { getArticleById } from "@/api/articles";
-import { uploadFile } from "@/api/publish";
+import { publishContent, uploadFile } from "@/api/publish";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Account, ContentItem, Platform, PlatformOption } from "@/lib/types";
+import { publishContentRequest } from "@/types";
 
 export default function ContentDetail() {
   const searchParams = useSearchParams();
@@ -60,6 +62,7 @@ export default function ContentDetail() {
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | "">("");
   const [releaseTime, setReleaseTime] = useState<Date | undefined>(undefined);
+  const [releaseTimeValue, setReleaseTimeValue] = useState<string>("10:30");
   const [publishMode, setPublishMode] = useState<"immediate" | "scheduled">(
     "immediate"
   ); // 发布模式
@@ -68,6 +71,10 @@ export default function ContentDetail() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]); // 已上传的图片URL列表
   const [uploadingImages, setUploadingImages] = useState<boolean[]>([]); // 上传状态
   const [dragOver, setDragOver] = useState(false); // 拖拽状态
+
+  const [uploadedImageOnLocal, setUploadedImageOnLocal] = useState<string[]>(
+    []
+  );
 
   // 获取账号列表
   const fetchAccounts = async () => {
@@ -186,12 +193,19 @@ export default function ContentDetail() {
     // 验证定时发布的时间
     if (publishMode === "scheduled") {
       if (!releaseTime) {
-        return { isValid: false, message: "请选择发布时间" };
+        return { isValid: false, message: "请选择发布日期" };
       }
 
       // 验证发布时间不能是过去的时间
+      // 合并日期和时间进行验证
+      const [hours, minutes] = releaseTimeValue.split(":");
+      const combinedDateTime = new Date(releaseTime);
+      combinedDateTime.setHours(parseInt(hours, 10));
+      combinedDateTime.setMinutes(parseInt(minutes, 10));
+      combinedDateTime.setSeconds(0);
+
       const now = new Date();
-      if (releaseTime <= now) {
+      if (combinedDateTime <= now) {
         return { isValid: false, message: "发布时间必须是未来的时间" };
       }
     }
@@ -210,7 +224,7 @@ export default function ContentDetail() {
     }
 
     // 获取选中的账号信息
-    const selectedAccountData = accounts.find(
+    const selectedAccountData: any = accounts.find(
       account => account.id === selectedAccount
     );
     if (!selectedAccountData) {
@@ -221,23 +235,30 @@ export default function ContentDetail() {
     }
 
     // 准备提交数据
-    const _submitData = {
+    const _submitData: publishContentRequest = {
       title: title.trim(),
       description: description.trim(),
       platform: selectedPlatform,
-      account: {
-        id: selectedAccount,
-        name: selectedAccountData.account_name,
-        platform: selectedAccountData.platform,
-      },
+      account: selectedAccountData.filePath,
       publishMode,
-      releaseTime: publishMode === "scheduled" ? releaseTime : undefined,
-      images: uploadedImages, // 包含上传的图片URL列表
+      images: uploadedImageOnLocal, // 包含上传的图片URL列表
     };
 
-    // console.log("提交数据:", _submitData);
+    if (publishMode === "scheduled" && releaseTime) {
+      // 合并日期和时间
+      const [hours, minutes] = releaseTimeValue.split(":");
+      const combinedDateTime = new Date(releaseTime);
+      combinedDateTime.setHours(parseInt(hours, 10));
+      combinedDateTime.setMinutes(parseInt(minutes, 10));
+      combinedDateTime.setSeconds(0);
+
+      // 格式化为 "yyyy-MM-dd HH:mm"
+      _submitData.releaseTime = format(combinedDateTime, "yyyy-MM-dd HH:mm");
+    }
+
     // TODO: 调用API提交数据
     // console.log("提交数据:", submitData);
+    publishContent(_submitData);
 
     toast("提交成功", {
       description:
@@ -346,7 +367,10 @@ export default function ContentDetail() {
         const result = await uploadFile(file);
 
         if (result.code === 0 && result.data?.object_key) {
-          return result.data.file_url;
+          return {
+            s3Url: result.data.file_url,
+            localUrl: result.data.file_name,
+          };
         } else {
           throw new Error(result.message || "上传失败");
         }
@@ -361,10 +385,23 @@ export default function ContentDetail() {
 
     // 等待所有上传完成
     const results = await Promise.all(uploadPromises);
-    const successfulUploads = results.filter(url => url !== null) as string[];
+    console.log(results, "results");
+    const successfulUploads = results.filter(url => url !== null) as {
+      s3Url: string;
+      localUrl: string;
+    }[];
 
     // 更新状态
-    setUploadedImages(prev => [...prev, ...successfulUploads]);
+
+    setUploadedImages(prev => [
+      ...prev,
+      ...successfulUploads.map(item => item.s3Url),
+    ]);
+    setUploadedImageOnLocal(prev => [
+      ...prev,
+      ...successfulUploads.map(item => item.localUrl),
+    ]);
+
     setUploadingImages(prev => prev.slice(0, -validFiles.length));
 
     if (successfulUploads.length > 0) {
@@ -405,6 +442,7 @@ export default function ContentDetail() {
 
   const removeImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setUploadedImageOnLocal(prev => prev.filter((_, i) => i !== index));
     toast("图片已删除");
   };
 
@@ -832,7 +870,7 @@ export default function ContentDetail() {
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {releaseTime ? (
-                              format(releaseTime, "PPP")
+                              format(releaseTime, "PPP", { locale: zhCN })
                             ) : (
                               <span>选择发布时间</span>
                             )}
@@ -843,6 +881,7 @@ export default function ContentDetail() {
                             mode="single"
                             selected={releaseTime}
                             captionLayout="dropdown"
+                            locale={zhCN}
                             onSelect={date => {
                               setReleaseTime(date);
                               setDatePickerOpen(false);
@@ -850,6 +889,14 @@ export default function ContentDetail() {
                           />
                         </PopoverContent>
                       </Popover>
+                      <Input
+                        type="time"
+                        id="time-picker"
+                        value={releaseTimeValue}
+                        onChange={e => setReleaseTimeValue(e.target.value)}
+                        className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none mt-2"
+                      />
+
                       <p className="text-xs text-gray-500 mt-1">
                         选择内容发布的具体时间
                       </p>

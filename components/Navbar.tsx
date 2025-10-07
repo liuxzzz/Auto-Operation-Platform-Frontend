@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Home, Images, Send, Sparkles, User } from "lucide-react";
+import { Bookmark, Send, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,11 +16,6 @@ export function Navbar({ onClose, className }: NavbarProps) {
 
   const navItems = [
     {
-      href: "/",
-      label: "首页",
-      icon: Home,
-    },
-    {
       href: "/account-manage",
       label: "账号管理",
       icon: User,
@@ -34,11 +29,6 @@ export function Navbar({ onClose, className }: NavbarProps) {
       href: "/my-collection",
       label: "我的收藏",
       icon: Bookmark,
-    },
-    {
-      href: "/material-manage",
-      label: "素材管理",
-      icon: Images,
     },
     {
       href: "/publish-center",
