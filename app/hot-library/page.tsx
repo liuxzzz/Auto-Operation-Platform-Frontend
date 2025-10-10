@@ -1,6 +1,8 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { reportSearchResult } from "@/api/articles";
 import ContentCard from "@/components/ContentCard";
@@ -34,6 +36,9 @@ export default function ContentPreview() {
   // 使用自定义 Hook 管理用户交互
   const { handleCollect, isCollected } = useUserInteractions();
 
+  //爬虫的状态
+  const [isCrawlerLoading, setIsCrawlerLoading] = useState(false);
+
   // 输入框状态
   const [inputValue, setInputValue] = useState("");
 
@@ -41,11 +46,33 @@ export default function ContentPreview() {
   const categories = getCategories();
 
   // 处理输入框提交
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     console.log("输入的内容:", inputValue);
-    reportSearchResult(inputValue);
-    // 这里可以添加你需要的处理逻辑
-    // 比如调用 API、搜索等
+    setIsCrawlerLoading(true);
+    try {
+      const res = await reportSearchResult(inputValue);
+      console.log(res, "res");
+      if (res.success) {
+        toast("爬虫任务提交成功", {
+          description: "请稍后查看结果",
+        });
+      } else {
+        toast("爬虫任务提交失败", {
+          description: res.message,
+        });
+      }
+
+      // 这里可以添加你需要的处理逻辑
+      // 比如调用 API、搜索等
+    } catch (error) {
+      console.error("爬虫任务提交失败:", error);
+      toast("爬虫任务提交失败", {
+        description:
+          error instanceof Error ? error.message : "未知错误，请稍后重试",
+      });
+    } finally {
+      setIsCrawlerLoading(false);
+    }
   };
 
   // 处理分类切换
@@ -103,8 +130,19 @@ export default function ContentPreview() {
                   }
                 }}
               />
-              <Button onClick={handleSubmit} className="px-6">
-                搜索
+              <Button
+                onClick={handleSubmit}
+                className="px-6"
+                disabled={isCrawlerLoading}
+              >
+                {isCrawlerLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    爬虫中...
+                  </>
+                ) : (
+                  "搜索"
+                )}
               </Button>
             </div>
           </div>
