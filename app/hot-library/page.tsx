@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
+import { reportSearchResult } from "@/api/articles";
 import ContentCard from "@/components/ContentCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Loading } from "@/components/ui/loading";
 import {
   Pagination,
@@ -30,8 +34,19 @@ export default function ContentPreview() {
   // 使用自定义 Hook 管理用户交互
   const { handleCollect, isCollected } = useUserInteractions();
 
+  // 输入框状态
+  const [inputValue, setInputValue] = useState("");
+
   // 获取所有分类
   const categories = getCategories();
+
+  // 处理输入框提交
+  const handleSubmit = () => {
+    console.log("输入的内容:", inputValue);
+    reportSearchResult(inputValue);
+    // 这里可以添加你需要的处理逻辑
+    // 比如调用 API、搜索等
+  };
 
   // 处理分类切换
   const handleCategoryChange = async (category: string) => {
@@ -73,6 +88,27 @@ export default function ContentPreview() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">内容预览</h1>
 
+          {/* 输入框和按钮 */}
+          <div className="mb-4">
+            <div className="flex items-center gap-3 max-w-xl">
+              <Input
+                type="text"
+                placeholder="输入爬虫关键词"
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                className="flex-1"
+                onKeyPress={e => {
+                  if (e.key === "Enter") {
+                    handleSubmit();
+                  }
+                }}
+              />
+              <Button onClick={handleSubmit} className="px-6">
+                搜索
+              </Button>
+            </div>
+          </div>
+
           {/* 分类筛选 */}
           <div className="flex flex-wrap gap-2">
             {categories.map(category => (
@@ -81,7 +117,7 @@ export default function ContentPreview() {
                 onClick={() => handleCategoryChange(category.keyword)}
                 className={`px-4 py-2 rounded-full text-sm font-medium   cursor-pointer transition-colors ${
                   currentCategory === category.keyword
-                    ? "bg-blue-600 text-white hover:bg-blue-600"
+                    ? "bg-[#1f1f1f] text-white hover:bg-[#1f1f1f]"
                     : "bg-gray-100 text-gray-700 hover:text-gray-700 hover:bg-gray-200  "
                 }`}
               >

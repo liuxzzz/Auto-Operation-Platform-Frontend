@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Account, Platform } from "@/lib/types";
 
 import { deleteAccount, getAccounts } from "../../api/account";
@@ -124,7 +123,7 @@ export default function AccountManage() {
       {/* 内容区域 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 标签页导航 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        {/* <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -138,7 +137,7 @@ export default function AccountManage() {
               ))}
             </TabsList>
           </Tabs>
-        </div>
+        </div> */}
 
         {/* Loading状态 */}
         {loading ? (

@@ -81,3 +81,17 @@ export const getArticleTags = async () => {
   const { data } = await response.json();
   return data;
 };
+
+export const reportSearchResult = async (keywords: string) => {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_CRAWLER_SERVER_API_URL}/api/v1/crawler/task`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ keywords }),
+    }
+  );
+  return response.json();
+};

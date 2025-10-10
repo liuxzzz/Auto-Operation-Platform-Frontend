@@ -2,7 +2,6 @@ import { Bookmark, Heart } from "lucide-react";
 import React from "react";
 
 import { ContentCardProps } from "@/lib/types/content";
-import { getFirstImage } from "@/lib/utils/imageUtils";
 
 export default function ContentCard({
   content,
@@ -58,78 +57,73 @@ export default function ContentCard({
 
   return (
     <div
-      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden relative group cursor-pointer"
+      className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden relative group cursor-pointer border border-gray-100 hover:border-gray-200"
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
       aria-label={`查看 ${content.title} 的详情`}
     >
-      {/* 收藏按钮 - 右上角 */}
-      <button
-        onClick={e => {
-          e.stopPropagation();
-          onCollect?.();
-        }}
-        className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200 cursor-pointer"
-      >
-        <Bookmark
-          size={16}
-          className={`${
-            isCollected ? "fill-yellow-400 text-yellow-400" : "text-gray-600"
-          } hover:text-yellow-400`}
-        />
-      </button>
-
-      {/* 图片区域 */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden">
-        <img
-          src={getFirstImage(content.image_list)}
-          alt={content.title}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        {/* 视频标识 */}
-        {content.type === "video" && (
-          <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-            视频
-          </div>
-        )}
-      </div>
-
       {/* 内容区域 */}
-      <div className="p-4 space-y-3">
-        {/* 标题 */}
-        <h3 className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2 leading-tight">
-          {content.title}
-        </h3>
+      <div className="p-5 space-y-4">
+        {/* 顶部：标题和收藏按钮 */}
+        <div className="flex items-start gap-3">
+          <h3 className="flex-1 font-semibold text-gray-900 text-base sm:text-lg line-clamp-2 leading-snug">
+            {content.title}
+          </h3>
+
+          {/* 收藏按钮 */}
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              onCollect?.();
+            }}
+            className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+            aria-label={isCollected ? "取消收藏" : "收藏"}
+          >
+            <Bookmark
+              size={18}
+              className={`${
+                isCollected
+                  ? "fill-yellow-500 text-yellow-500"
+                  : "text-gray-400 hover:text-yellow-500"
+              } transition-colors`}
+            />
+          </button>
+        </div>
 
         {/* 描述文案 */}
-        <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 leading-relaxed">
+        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
           {formatDescription(content.desc)}
         </p>
 
-        {/* 用户信息和点赞 */}
+        {/* 分隔线 */}
+        <div className="border-t border-gray-100"></div>
+
+        {/* 底部：用户信息和互动数据 */}
         <div className="flex items-center justify-between">
           {/* 用户信息 */}
-          <div className="flex items-center space-x-2 flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <img
               src={content.avatar}
               alt={content.nickname}
-              className="w-6 h-6 rounded-full flex-shrink-0"
+              className="w-8 h-8 rounded-full flex-shrink-0 ring-2 ring-gray-100"
             />
-            <span className="text-gray-700 text-xs sm:text-sm font-medium truncate">
+            <span className="text-gray-700 text-sm font-medium truncate">
               {content.nickname}
             </span>
           </div>
 
-          {/* 点赞信息 */}
-          <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors duration-200 flex-shrink-0">
-            <Heart size={14} />
-            <span className="text-xs sm:text-sm">
-              {formatCount(content.liked_count)}
-            </span>
-          </button>
+          {/* 互动数据 */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            {/* 点赞数 */}
+            <div className="flex items-center gap-1.5 text-gray-600 group-hover:text-red-500 transition-colors duration-200">
+              <Heart size={16} className="flex-shrink-0" />
+              <span className="text-sm font-medium">
+                {formatCount(content.liked_count)}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Calendar as CalendarIcon,
   Globe,
+  Loader2,
   Sparkles,
   Upload,
   User,
@@ -60,6 +61,7 @@ export default function ContentDetail() {
   const [expression, setExpression] = useState("");
   const [description, setDescription] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedModel, setSelectedModel] = useState("deepseek");
   const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | "">("");
@@ -261,7 +263,7 @@ export default function ContentDetail() {
     return { isValid: true };
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // 执行表单验证
     const validation = verifyForm();
     if (!validation.isValid) {
@@ -282,53 +284,76 @@ export default function ContentDetail() {
       return;
     }
 
-    // 准备提交数据
-    const _submitData: publishContentRequest = {
-      title: title.trim(),
-      description: description.trim(),
-      platform: selectedPlatform,
-      account: selectedAccountData.filePath,
-      publishMode,
-      images: uploadedImageOnLocal, // 包含上传的图片URL列表
-    };
+    try {
+      setIsSubmitting(true);
 
-    if (publishMode === "scheduled" && releaseTime) {
-      // 合并日期和时间
-      const [hours, minutes] = releaseTimeValue.split(":");
-      const combinedDateTime = new Date(releaseTime);
-      combinedDateTime.setHours(parseInt(hours, 10));
-      combinedDateTime.setMinutes(parseInt(minutes, 10));
-      combinedDateTime.setSeconds(0);
+      // 准备提交数据
+      const _submitData: publishContentRequest = {
+        title: title.trim(),
+        description: description.trim(),
+        platform: selectedPlatform,
+        account: selectedAccountData.filePath,
+        publishMode,
+        images: uploadedImageOnLocal, // 包含上传的图片URL列表
+      };
 
-      // 格式化为 "yyyy-MM-dd HH:mm"
-      _submitData.releaseTime = format(combinedDateTime, "yyyy-MM-dd HH:mm");
-    }
+      if (publishMode === "scheduled" && releaseTime) {
+        // 合并日期和时间
+        const [hours, minutes] = releaseTimeValue.split(":");
+        const combinedDateTime = new Date(releaseTime);
+        combinedDateTime.setHours(parseInt(hours, 10));
+        combinedDateTime.setMinutes(parseInt(minutes, 10));
+        combinedDateTime.setSeconds(0);
 
-    // TODO: 调用API提交数据
-    // console.log("提交数据:", submitData);
-    publishContent(_submitData);
-
-    toast("提交成功", {
-      description:
-        publishMode === "immediate" ? "内容已发布" : "内容已安排定时发布",
-    });
-
-    // 如果是从草稿编辑的，删除草稿
-    if (currentDraftId) {
-      try {
-        const savedDrafts = localStorage.getItem("content_drafts");
-        if (savedDrafts) {
-          const drafts: DraftItem[] = JSON.parse(savedDrafts);
-          const updatedDrafts = drafts.filter(d => d.id !== currentDraftId);
-          localStorage.setItem("content_drafts", JSON.stringify(updatedDrafts));
-        }
-      } catch (error) {
-        console.error("删除草稿失败:", error);
+        // 格式化为 "yyyy-MM-dd HH:mm"
+        _submitData.releaseTime = format(combinedDateTime, "yyyy-MM-dd HH:mm");
       }
-    }
 
-    // 提交成功后可以跳转或重置表单
-    // router.push("/publish-center");
+      // 调用API提交数据
+      const res = await publishContent(_submitData);
+      console.log(res, "res");
+
+      if (res.status === "success") {
+        toast("提交成功", {
+          description:
+            publishMode === "immediate"
+              ? "内容已发布成功"
+              : "内容已安排定时发布成功",
+        });
+
+        // 如果是从草稿编辑的，删除草稿
+        if (currentDraftId) {
+          try {
+            const savedDrafts = localStorage.getItem("content_drafts");
+            if (savedDrafts) {
+              const drafts: DraftItem[] = JSON.parse(savedDrafts);
+              const updatedDrafts = drafts.filter(d => d.id !== currentDraftId);
+              localStorage.setItem(
+                "content_drafts",
+                JSON.stringify(updatedDrafts)
+              );
+            }
+          } catch (error) {
+            console.error("删除草稿失败:", error);
+          }
+        }
+
+        // 提交成功后可以跳转或重置表单
+        // router.push("/publish-center");
+      } else {
+        toast("提交失败", {
+          description: "请联系小壮帮你解决问题",
+        });
+      }
+    } catch (error) {
+      console.error("提交失败:", error);
+      toast("提交失败", {
+        description:
+          error instanceof Error ? error.message : "未知错误，请稍后重试",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveDraft = () => {
@@ -1026,24 +1051,39 @@ export default function ContentDetail() {
               {/* 确认按钮 */}
               <div className="flex justify-end pt-6 border-t border-gray-200 mt-6">
                 <div className="flex space-x-3">
-                  <Button variant="outline" onClick={() => router.back()}>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.back()}
+                    disabled={isSubmitting}
+                  >
                     取消
                   </Button>
                   <Button
                     variant="outline"
                     onClick={handleSaveDraft}
                     className="px-6"
+                    disabled={isSubmitting}
                   >
                     存草稿
                   </Button>
                   <Button
                     onClick={handleSubmit}
                     disabled={
-                      !title.trim() || !selectedPlatform || !selectedAccount
+                      isSubmitting ||
+                      !title.trim() ||
+                      !selectedPlatform ||
+                      !selectedAccount
                     }
                     className="px-8 cursor-pointer"
                   >
-                    保存并发布
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        发布中...
+                      </>
+                    ) : (
+                      "保存并发布"
+                    )}
                   </Button>
                 </div>
               </div>
